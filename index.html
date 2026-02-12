@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Byefron Skybox Studio</title>
+<link rel="stylesheet" href="skybox_cutter.css">
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span>Byefron</span> Skybox Studio</div>
+  <a href="https://discord.gg/n6EJBks3Ng" target="_blank">Discord</a>
+  <a href="https://github.com/Srungot/ByefronSkyboxStudio" target="_blank">GitHub</a>
+</nav>
+
+<div class="drop-overlay" id="dropOverlay"><div class="drop-overlay-text">Drop image to convert</div></div>
+
+<div class="hero">
+  <h1>Panorama to Roblox<span>Skybox Converter</span></h1>
+  <p>Convert equirectangular panoramas into 6 seamless skybox faces. Upload directly to Roblox.</p>
+</div>
+
+<div class="action-bar">
+  <button class="btn btn-accent" onclick="document.getElementById('fileInput').click()">Choose file</button>
+  <button class="btn btn-green hidden" id="exportBtn" onclick="exportAll()">Export All</button>
+  <button class="btn hidden" id="uploadToggle" onclick="openUploadModal()">Upload to Roblox</button>
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="convert" onclick="switchTab('convert')">Convert</div>
+  <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
+  <div class="tab" data-tab="tutorial" onclick="switchTab('tutorial')">Tutorial</div>
+</div>
+
+<!-- Convert tab -->
+<div class="tab-content active" id="tab-convert">
+  <div class="result-box hidden" id="resultBox">
+    <div class="result-header">
+      <span id="fileInfo">No file loaded</span>
+      <span id="faceSize"></span>
+    </div>
+    <div class="cube-wrap">
+      <div class="cube-grid" id="cubeGrid">
+        <div class="face empty"></div><div class="face" data-face="Up"><div class="lbl">Up</div></div><div class="face empty"></div><div class="face empty"></div>
+        <div class="face" data-face="Left"><div class="lbl">Lf</div></div><div class="face" data-face="Front"><div class="lbl">Ft</div></div><div class="face" data-face="Right"><div class="lbl">Rt</div></div><div class="face" data-face="Back"><div class="lbl">Bk</div></div>
+        <div class="face empty"></div><div class="face" data-face="Down"><div class="lbl">Dn</div></div><div class="face empty"></div><div class="face empty"></div>
+      </div>
+    </div>
+    <div class="face-list" id="faceList"></div>
+  </div>
+</div>
+
+<!-- History tab -->
+<div class="tab-content" id="tab-history">
+  <div class="history-section" id="historyContainer">
+    <div class="history-empty" id="historyEmpty">No uploads yet. Convert and upload a skybox to see it here.</div>
+  </div>
+</div>
+
+<!-- Tutorial tab -->
+<div class="tab-content" id="tab-tutorial">
+  <div class="tutorial-section">
+
+    <div class="tut-step">
+      <span class="tut-num">1</span>
+      <h3>Get a panorama image</h3>
+      <p>You need an equirectangular panorama image (2:1 ratio). You can find free HDRIs at <a href="https://polyhaven.com/hdris" target="_blank">Poly Haven</a> or <a href="https://hdri-haven.com" target="_blank">HDRI Haven</a>. Download as JPG or PNG. The tool will cap face size at 1024px.</p>
+    </div>
+
+    <div class="tut-step">
+      <span class="tut-num">2</span>
+      <h3>Convert the panorama</h3>
+      <p>Click <strong>Choose file</strong> or drag and drop your image onto the page. The tool will automatically split it into 6 skybox faces (Right, Left, Front, Back, Up, Down) using the correct Roblox orientations.</p>
+      <p>You can click on any face name to download it individually, or click <strong>Export All</strong> to download all 6 faces at once.</p>
+    </div>
+
+    <div class="tut-step">
+      <span class="tut-num">3</span>
+      <h3>Create a Roblox Open Cloud API Key</h3>
+      <p>To upload faces directly to Roblox, you need an API key:</p>
+      <ul>
+        <li>Go to <a href="https://create.roblox.com/dashboard/credentials" target="_blank">create.roblox.com/dashboard/credentials</a></li>
+        <li>Click <strong>Create API Key</strong></li>
+        <li>Name it anything (e.g. <code>skybox-upload</code>)</li>
+        <li>Under <strong>Access Permissions</strong>, add the <strong>Assets API</strong></li>
+        <li>Set the operation to <strong>Read</strong> and <strong>Write</strong></li>
+        <li>Under <strong>Accepted IP Addresses</strong>, add <code>0.0.0.0/0</code> to allow all IPs (or restrict to your IP)</li>
+        <li>Click <strong>Save & Generate Key</strong></li>
+        <li>Copy the key immediately -- you won't be able to see it again</li>
+      </ul>
+      <div class="tut-note">Your API key is stored only in your browser's localStorage. It is never sent anywhere except directly to Roblox's API through the CORS proxy.</div>
+    </div>
+
+    <div class="tut-step">
+      <span class="tut-num">4</span>
+      <h3>Find your Roblox User ID</h3>
+      <p>Go to your Roblox profile page. Your User ID is the number in the URL:</p>
+      <p><code>https://www.roblox.com/users/<strong>10092447863</strong>/profile</code></p>
+      <p>Copy just the number and paste it in the <strong>Roblox User ID</strong> field.</p>
+    </div>
+
+    <div class="tut-step">
+      <span class="tut-num">5</span>
+      <h3>Upload to Roblox</h3>
+      <p>After converting a panorama, click <strong>Upload to Roblox</strong>. Fill in your API Key and User ID (they are saved automatically for next time). The preset name is auto-filled from the filename.</p>
+      <p>The tool will upload all 6 faces one by one and generate a JSON preset with the asset IDs. Click the JSON block to copy it to your clipboard.</p>
+    </div>
+
+    <div class="tut-step">
+      <span class="tut-num">6</span>
+      <h3>Use the JSON preset</h3>
+      <p>The generated JSON contains the <code>rbxassetid://</code> URLs for each face. You can paste this into your skybox configuration. The format is:</p>
+      <ul>
+        <li><code>bk</code> -- SkyboxBk (Back)</li>
+        <li><code>dn</code> -- SkyboxDn (Down)</li>
+        <li><code>ft</code> -- SkyboxFt (Front)</li>
+        <li><code>lf</code> -- SkyboxLf (Left)</li>
+        <li><code>rt</code> -- SkyboxRt (Right)</li>
+        <li><code>up</code> -- SkyboxUp (Up)</li>
+      </ul>
+      <p>All your uploads are saved in the <strong>History</strong> tab so you can access them later.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="overlay" id="uploadOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+    <h2>Upload to Roblox</h2>
+    <div class="field"><label>Open Cloud API Key</label><input type="password" id="apiKey" placeholder="Paste your API key"></div>
+    <div class="field"><label>Roblox User ID</label><input type="text" id="userId" placeholder="e.g. 10092447863"></div>
+    <div class="field"><label>Preset Name</label><input type="text" id="presetName" value="My Skybox"></div>
+    <div class="upload-steps" id="uploadSteps"></div>
+    <div class="modal-progress" id="progressBar" style="display:none"><div class="bar" id="progressFill"></div></div>
+    <div class="json-box hidden" id="jsonOutput" title="Click to copy"></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-accent" id="uploadBtn" onclick="uploadAll()" style="flex:1">Upload All Faces</button>
+      <button class="btn" onclick="closeUploadModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="skybox_cutter.js"></script>
+</body>
+</html>
