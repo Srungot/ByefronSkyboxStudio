@@ -666,6 +666,40 @@ function sharePreset(){
 function closeShareModal(){document.getElementById("shareOverlay").classList.remove("open")}
 document.getElementById("shareOverlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeShareModal()});
 
+async function loadSharedPreset(ids,name){
+  lastUploadIds=ids;
+  sourceFileName=name||"shared";
+  document.getElementById("fileInfo").textContent=`Shared: ${name}`;
+  document.getElementById("luaBtn").classList.remove("hidden");
+  document.getElementById("controlsBar").classList.remove("hidden");
+  const allIds=FACE_ORDER.map(f=>ids[f]).filter(Boolean);
+  if(allIds.length===0){showLuaSnippet();return}
+  try{
+    const resp=await fetch(`https://thumbnails.roblox.com/v1/assets?assetIds=${allIds.join(",")}&size=420x420&format=Png&isCircular=false`);
+    const data=await resp.json();
+    const urlMap={};
+    if(data.data){for(const item of data.data){urlMap[String(item.targetId)]=item.imageUrl}}
+    let loaded=0;
+    for(const face of FACE_ORDER){
+      if(!ids[face]||!urlMap[ids[face]])continue;
+      const img=new Image();img.crossOrigin="anonymous";
+      await new Promise((res,rej)=>{
+        img.onload=res;img.onerror=rej;
+        img.src=urlMap[ids[face]];
+      });
+      const c=document.createElement("canvas");c.width=img.width;c.height=img.height;
+      c.getContext("2d").drawImage(img,0,0);
+      faces[face]=c;loaded++;
+    }
+    if(loaded>0){
+      document.getElementById("faceSize").textContent=`${faces[FACE_ORDER.find(f=>faces[f])].width}\u00d7${faces[FACE_ORDER.find(f=>faces[f])].height}`;
+      showResults();
+      setTimeout(()=>init3DPreview(),50);
+    }
+  }catch(e){}
+  showLuaSnippet();
+}
+
 window.addEventListener("DOMContentLoaded",()=>{
   const p=new URLSearchParams(location.search);
   if(p.has("n")){
@@ -673,9 +707,7 @@ window.addEventListener("DOMContentLoaded",()=>{
     const ids={};
     for(const f of FACE_ORDER){const v=p.get(FACE_SHORT[f].toLowerCase());if(v)ids[f]=v}
     if(Object.keys(ids).length>0){
-      lastUploadIds=ids;
-      document.getElementById("luaBtn").classList.remove("hidden");
-      showLuaSnippet();
+      loadSharedPreset(ids,name);
     }
   }
 });
