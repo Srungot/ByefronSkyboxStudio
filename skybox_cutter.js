@@ -674,10 +674,8 @@ window.addEventListener("DOMContentLoaded",()=>{
     for(const f of FACE_ORDER){const v=p.get(FACE_SHORT[f].toLowerCase());if(v)ids[f]=v}
     if(Object.keys(ids).length>0){
       lastUploadIds=ids;
-      const json={name};
-      for(const f of FACE_ORDER){const k=FACE_SHORT[f].toLowerCase();json[k]=`rbxassetid://${ids[f]||""}`}
-      alert(`Shared preset "${name}" loaded! Click "Lua Code" to get the snippet.`);
       document.getElementById("luaBtn").classList.remove("hidden");
+      showLuaSnippet();
     }
   }
 });
