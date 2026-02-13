@@ -673,12 +673,18 @@ async function loadSharedPreset(ids,name){
   document.getElementById("luaBtn").classList.remove("hidden");
   document.getElementById("controlsBar").classList.remove("hidden");
   const allIds=FACE_ORDER.map(f=>ids[f]).filter(Boolean);
-  if(allIds.length===0){showLuaSnippet();return}
+  if(allIds.length===0)return;
+  const prog=document.getElementById("convertProgress");
+  const fill=document.getElementById("convertFill");
+  const label=document.getElementById("convertLabel");
+  prog.classList.add("visible");fill.style.width="0%";label.textContent=`Loading shared preset "${name}"...`;
   try{
+    fill.style.width="10%";
     const resp=await fetch(`${WORKER_URL.replace("/robloxassets","")}/thumbnails/v1/assets?assetIds=${allIds.join(",")}&size=420x420&format=Png&isCircular=false`);
     const data=await resp.json();
     const urlMap={};
     if(data.data){for(const item of data.data){urlMap[String(item.targetId)]=item.imageUrl}}
+    fill.style.width="30%";
     let loaded=0;
     for(const face of FACE_ORDER){
       if(!ids[face]||!urlMap[ids[face]])continue;
@@ -690,14 +696,20 @@ async function loadSharedPreset(ids,name){
       const c=document.createElement("canvas");c.width=img.width;c.height=img.height;
       c.getContext("2d").drawImage(img,0,0);
       faces[face]=c;loaded++;
+      fill.style.width=`${30+((loaded/6)*60)}%`;
+      label.textContent=`Loading face ${loaded}/6...`;
     }
+    fill.style.width="95%";
     if(loaded>0){
       document.getElementById("faceSize").textContent=`${faces[FACE_ORDER.find(f=>faces[f])].width}\u00d7${faces[FACE_ORDER.find(f=>faces[f])].height}`;
       showResults();
       setTimeout(()=>init3DPreview(),50);
     }
-  }catch(e){}
-  showLuaSnippet();
+    fill.style.width="100%";label.textContent="Done!";
+  }catch(e){
+    label.textContent="Failed to load shared preset";
+  }
+  setTimeout(()=>prog.classList.remove("visible"),1500);
 }
 
 window.addEventListener("DOMContentLoaded",()=>{
