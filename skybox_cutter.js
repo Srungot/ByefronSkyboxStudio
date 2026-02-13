@@ -46,16 +46,64 @@ function loadFile(file){
 
 const rotSlider=document.getElementById("rotSlider");
 const rotVal=document.getElementById("rotVal");
-rotSlider.addEventListener("input",()=>{
-  rotVal.textContent=rotSlider.value+"\u00b0";
-});
-rotSlider.addEventListener("change",()=>{
-  if(sourceImage)convertToFaces(sourceImage);
-});
+rotSlider.addEventListener("input",()=>{rotVal.textContent=rotSlider.value+"\u00b0"});
+rotSlider.addEventListener("change",()=>{if(sourceImage)convertToFaces(sourceImage)});
+
+const brSlider=document.getElementById("brSlider");
+const ctSlider=document.getElementById("ctSlider");
+const satSlider=document.getElementById("satSlider");
+const brVal=document.getElementById("brVal");
+const ctVal=document.getElementById("ctVal");
+const satVal=document.getElementById("satVal");
+brSlider.addEventListener("input",()=>{brVal.textContent=brSlider.value});
+ctSlider.addEventListener("input",()=>{ctVal.textContent=ctSlider.value});
+satSlider.addEventListener("input",()=>{satVal.textContent=satSlider.value});
+brSlider.addEventListener("change",()=>{if(sourceImage)convertToFaces(sourceImage)});
+ctSlider.addEventListener("change",()=>{if(sourceImage)convertToFaces(sourceImage)});
+satSlider.addEventListener("change",()=>{if(sourceImage)convertToFaces(sourceImage)});
 
 function reconvert(){
   if(!sourceImage)return;
   convertToFaces(sourceImage);
+}
+
+function applyBCS(sd){
+  const br=parseInt(brSlider.value)||0;
+  const ct=parseInt(ctSlider.value)||0;
+  const sat=parseInt(satSlider.value)||0;
+  if(br===0&&ct===0&&sat===0)return sd;
+  const d=sd.data;
+  const cF=(259*(ct+255))/(255*(259-ct));
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i],g=d[i+1],b=d[i+2];
+    r+=br*2.55;g+=br*2.55;b+=br*2.55;
+    r=cF*(r-128)+128;g=cF*(g-128)+128;b=cF*(b-128)+128;
+    if(sat!==0){
+      const gray=0.2126*r+0.7152*g+0.0722*b;
+      const s=1+sat/100;
+      r=gray+s*(r-gray);g=gray+s*(g-gray);b=gray+s*(b-gray);
+    }
+    d[i]=Math.max(0,Math.min(255,r));
+    d[i+1]=Math.max(0,Math.min(255,g));
+    d[i+2]=Math.max(0,Math.min(255,b));
+  }
+  return sd;
+}
+
+function stampWatermark(canvas){
+  if(!document.getElementById("wmCheck").checked)return;
+  const txt=document.getElementById("wmText").value.trim();
+  if(!txt)return;
+  const ctx=canvas.getContext("2d");
+  const sz=Math.max(10,canvas.width*0.06);
+  ctx.save();
+  ctx.font=`bold ${sz}px sans-serif`;
+  ctx.fillStyle="rgba(255,255,255,0.25)";
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.translate(canvas.width/2,canvas.height/2);
+  ctx.rotate(-Math.PI/6);
+  ctx.fillText(txt,0,0);
+  ctx.restore();
 }
 
 function convertToFaces(img){
@@ -68,7 +116,7 @@ function convertToFaces(img){
   src.width=img.width;src.height=img.height;
   const sctx=src.getContext("2d");
   sctx.drawImage(img,0,0);
-  const sd=sctx.getImageData(0,0,img.width,img.height);
+  const sd=applyBCS(sctx.getImageData(0,0,img.width,img.height));
   const O={
     Right:(x,y)=>({x:-1,y:-x,z:-y}),Left:(x,y)=>({x:1,y:x,z:-y}),
     Front:(x,y)=>({x:x,y:-1,z:-y}),Back:(x,y)=>({x:-x,y:1,z:-y}),
@@ -104,7 +152,7 @@ function convertToFaces(img){
         const di=(py*faceSize+px)*4;
         wd.data[di]=sd.data[si];wd.data[di+1]=sd.data[si+1];wd.data[di+2]=sd.data[si+2];wd.data[di+3]=255;
       }}
-      ctx.putImageData(wd,0,0);faces[face]=c;
+      ctx.putImageData(wd,0,0);stampWatermark(c);faces[face]=c;
       fill.style.width=`${((fi+1)/6)*100}%`;
       fi++;
       doFace();
@@ -124,6 +172,10 @@ function showResults(){
       let i=el.querySelector("img");if(!i){i=document.createElement("img");el.appendChild(i)}
       i.src=faces[f].toDataURL();
       i.draggable=false;
+    }
+    if(!el.querySelector(".face-replace-hint")){
+      const hint=document.createElement("div");hint.className="face-replace-hint";hint.textContent="Drop image / Drag to swap";
+      el.appendChild(hint);
     }
     el.draggable=true;
     el.addEventListener("dragstart",onFaceDragStart);
@@ -158,7 +210,25 @@ function onFaceDrop(e){
   e.stopPropagation();
   this.classList.remove("drag-over");
   const targetFace=this.dataset.face;
-  if(!draggedFace||!targetFace||draggedFace===targetFace)return;
+  if(!targetFace)return;
+  if(e.dataTransfer.files&&e.dataTransfer.files[0]&&e.dataTransfer.files[0].type.startsWith("image/")){
+    const file=e.dataTransfer.files[0];
+    const img=new Image();
+    img.onload=()=>{
+      const sz=faces[targetFace]?faces[targetFace].width:1024;
+      const c=document.createElement("canvas");c.width=sz;c.height=sz;
+      c.getContext("2d").drawImage(img,0,0,sz,sz);
+      stampWatermark(c);
+      faces[targetFace]=c;
+      const el=document.querySelector(`.cube-grid .face[data-face="${targetFace}"]`);
+      if(el){let i=el.querySelector("img");if(i)i.src=c.toDataURL()}
+      if(gl3d){uploadFaceTextures();render3D()}
+    };
+    img.src=URL.createObjectURL(file);
+    draggedFace=null;
+    return;
+  }
+  if(!draggedFace||draggedFace===targetFace)return;
   const tmp=faces[draggedFace];
   faces[draggedFace]=faces[targetFace];
   faces[targetFace]=tmp;
@@ -308,6 +378,9 @@ async function uploadAll(){
   btn.onclick=null;
   btn.onclick=()=>closeUploadModal();
 
+  lastUploadIds=ids;
+  document.getElementById("luaBtn").classList.remove("hidden");
+  document.getElementById("shareBtn").classList.remove("hidden");
   saveToHistory({name:preset,date:new Date().toISOString(),ids,thumbs,json});
 }
 
@@ -520,4 +593,215 @@ function render3D(){
 
   gl.uniformMatrix4fv(gl.getUniformLocation(gl3dProg,"u_invVP"),false,m);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+
+let lastUploadIds={};
+
+function showLuaSnippet(){
+  const ids=lastUploadIds;
+  const hasIds=Object.values(ids).some(v=>v);
+  const code=hasIds?
+`local sky = Instance.new("Sky")
+sky.SkyboxRt = "rbxassetid://${ids.Right||"0"}"
+sky.SkyboxLf = "rbxassetid://${ids.Left||"0"}"
+sky.SkyboxFt = "rbxassetid://${ids.Front||"0"}"
+sky.SkyboxBk = "rbxassetid://${ids.Back||"0"}"
+sky.SkyboxUp = "rbxassetid://${ids.Up||"0"}"
+sky.SkyboxDn = "rbxassetid://${ids.Down||"0"}"
+sky.Parent = game:GetService("Lighting")`:
+`-- Upload faces first to get asset IDs
+local sky = Instance.new("Sky")
+sky.SkyboxRt = "rbxassetid://REPLACE"
+sky.SkyboxLf = "rbxassetid://REPLACE"
+sky.SkyboxFt = "rbxassetid://REPLACE"
+sky.SkyboxBk = "rbxassetid://REPLACE"
+sky.SkyboxUp = "rbxassetid://REPLACE"
+sky.SkyboxDn = "rbxassetid://REPLACE"
+sky.Parent = game:GetService("Lighting")`;
+  document.getElementById("luaCode").textContent=code;
+  document.getElementById("luaOverlay").classList.add("open");
+}
+function closeLuaModal(){document.getElementById("luaOverlay").classList.remove("open")}
+document.getElementById("luaOverlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeLuaModal()});
+
+function sharePreset(){
+  const ids=lastUploadIds;
+  const hasIds=Object.values(ids).some(v=>v);
+  if(!hasIds){
+    const h=getHistory();
+    if(h.length>0&&h[0].ids)Object.assign(ids,h[0].ids);
+  }
+  const params=new URLSearchParams();
+  const name=document.getElementById("presetName").value.trim()||"Skybox";
+  params.set("n",name);
+  for(const f of FACE_ORDER){if(ids[f])params.set(FACE_SHORT[f].toLowerCase(),ids[f])}
+  const url=location.origin+location.pathname+"?"+params.toString();
+  document.getElementById("shareUrl").value=url;
+  document.getElementById("shareOverlay").classList.add("open");
+}
+function closeShareModal(){document.getElementById("shareOverlay").classList.remove("open")}
+document.getElementById("shareOverlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeShareModal()});
+
+window.addEventListener("DOMContentLoaded",()=>{
+  const p=new URLSearchParams(location.search);
+  if(p.has("n")){
+    const name=p.get("n");
+    const ids={};
+    for(const f of FACE_ORDER){const v=p.get(FACE_SHORT[f].toLowerCase());if(v)ids[f]=v}
+    if(Object.keys(ids).length>0){
+      lastUploadIds=ids;
+      const json={name};
+      for(const f of FACE_ORDER){const k=FACE_SHORT[f].toLowerCase();json[k]=`rbxassetid://${ids[f]||""}`}
+      alert(`Shared preset "${name}" loaded! Click "Lua Code" to get the snippet.`);
+      document.getElementById("luaBtn").classList.remove("hidden");
+      document.getElementById("shareBtn").classList.remove("hidden");
+    }
+  }
+});
+
+const batchQueue=[];
+const batchInput=document.getElementById("batchInput");
+batchInput.addEventListener("change",e=>{
+  for(const file of e.target.files){
+    batchQueue.push({file,name:file.name.replace(/\.[^.]+$/,""),status:"pending",faces:null,ids:null});
+  }
+  batchInput.value="";
+  renderBatchQueue();
+});
+
+function renderBatchQueue(){
+  const container=document.getElementById("batchQueue");
+  container.innerHTML="";
+  document.getElementById("batchCount").textContent=`${batchQueue.length} file${batchQueue.length!==1?"s":""}`;
+  document.getElementById("batchConvertBtn").disabled=batchQueue.length===0;
+  document.getElementById("batchUploadBtn").disabled=!batchQueue.some(q=>q.faces);
+  batchQueue.forEach((item,idx)=>{
+    const div=document.createElement("div");div.className="batch-item";
+    const statusCls=item.status==="done"?"done":item.status==="error"?"err":"";
+    div.innerHTML=`
+      <div class="batch-name">${item.name}</div>
+      <div class="batch-status ${statusCls}">${item.status}</div>
+      <button class="batch-remove" onclick="batchRemove(${idx})">\u00d7</button>`;
+    container.appendChild(div);
+  });
+}
+
+function batchRemove(idx){
+  batchQueue.splice(idx,1);
+  renderBatchQueue();
+}
+
+async function batchConvertAll(){
+  const btn=document.getElementById("batchConvertBtn");
+  btn.disabled=true;btn.textContent="Converting...";
+  const selRes=parseInt(document.getElementById("resSelect").value)||1024;
+  const rotDeg=parseInt(rotSlider.value)||0;
+  const rotRad=rotDeg*Math.PI/180;
+  const O={
+    Right:(x,y)=>({x:-1,y:-x,z:-y}),Left:(x,y)=>({x:1,y:x,z:-y}),
+    Front:(x,y)=>({x:x,y:-1,z:-y}),Back:(x,y)=>({x:-x,y:1,z:-y}),
+    Up:(x,y)=>({x:-y,y:-x,z:1}),Down:(x,y)=>({x:y,y:-x,z:-1}),
+  };
+  for(const item of batchQueue){
+    if(item.faces){item.status="done";continue}
+    item.status="converting";renderBatchQueue();
+    try{
+      const img=await new Promise((res,rej)=>{
+        const i=new Image();i.onload=()=>res(i);i.onerror=rej;
+        i.src=URL.createObjectURL(item.file);
+      });
+      const faceSize=Math.min(img.height,selRes);
+      const src=document.createElement("canvas");src.width=img.width;src.height=img.height;
+      const sctx=src.getContext("2d");sctx.drawImage(img,0,0);
+      const sd=applyBCS(sctx.getImageData(0,0,img.width,img.height));
+      const w=sd.width,h=sd.height;
+      item.faces={};
+      for(const face of FACE_ORDER){
+        const c=document.createElement("canvas");c.width=faceSize;c.height=faceSize;
+        const ctx=c.getContext("2d");const wd=ctx.createImageData(faceSize,faceSize);
+        const orient=O[face];
+        for(let px=0;px<faceSize;px++){for(let py=0;py<faceSize;py++){
+          const fx=(2*(px+.5)/faceSize)-1,fy=(2*(py+.5)/faceSize)-1;
+          const cb=orient(fx,fy);const r=Math.sqrt(cb.x*cb.x+cb.y*cb.y+cb.z*cb.z);
+          let lon=Math.atan2(cb.y,cb.x)+rotRad;const lat=Math.acos(cb.z/r);
+          let sx=w*lon/(2*Math.PI)-.5;const sy=h*lat/Math.PI-.5;
+          sx=((sx%w)+w)%w;
+          const si=(Math.round(Math.min(Math.max(sy,0),h-1))*w+Math.round(Math.min(Math.max(sx,0),w-1)))*4;
+          const di=(py*faceSize+px)*4;
+          wd.data[di]=sd.data[si];wd.data[di+1]=sd.data[si+1];wd.data[di+2]=sd.data[si+2];wd.data[di+3]=255;
+        }}
+        ctx.putImageData(wd,0,0);stampWatermark(c);
+        item.faces[face]=c;
+      }
+      item.status="done";
+    }catch(e){
+      item.status="error";
+    }
+    renderBatchQueue();
+    await new Promise(r=>setTimeout(r,10));
+  }
+  btn.disabled=false;btn.textContent="Convert All";
+  renderBatchQueue();
+}
+
+async function batchUploadAll(){
+  const apiKey=document.getElementById("apiKey")?.value?.trim();
+  const userId=document.getElementById("userId")?.value?.trim();
+  if(!apiKey||!userId){openUploadModal();return}
+  const btn=document.getElementById("batchUploadBtn");
+  btn.disabled=true;btn.textContent="Uploading...";
+  for(const item of batchQueue){
+    if(!item.faces||item.ids){continue}
+    item.status="uploading";renderBatchQueue();
+    const preset=item.name.replace(/[_\-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase()).trim();
+    const ids={};const thumbs={};
+    let ok=true;
+    for(let i=0;i<FACE_ORDER.length;i++){
+      const face=FACE_ORDER[i];
+      try{
+        const blob=await new Promise(r=>item.faces[face].toBlob(r,"image/png"));
+        const imgBuf=await blob.arrayBuffer();
+        const jsonPart=JSON.stringify({assetType:"Image",displayName:`${preset}_${FACE_SHORT[face]}`.slice(0,50),description:"Skybox face",creationContext:{creator:{userId}}});
+        const boundary="----BF"+Date.now()+i;
+        const enc=new TextEncoder();
+        const parts=[
+          enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="request"\r\nContent-Type: application/json\r\n\r\n${jsonPart}\r\n`),
+          enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="fileContent"; filename="${FACE_SHORT[face]}.png"\r\nContent-Type: image/png\r\n\r\n`),
+          new Uint8Array(imgBuf),
+          enc.encode(`\r\n--${boundary}--\r\n`)
+        ];
+        const totalLen=parts.reduce((a,b)=>a+b.byteLength,0);
+        const body=new Uint8Array(totalLen);
+        let off=0;for(const p of parts){body.set(p,off);off+=p.byteLength;}
+        const resp=await fetch(`${WORKER_URL}/assets/v1/assets`,{method:"POST",headers:{"x-api-key":apiKey,"content-type":`multipart/form-data; boundary=${boundary}`},body:body.buffer});
+        if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
+        const data=await resp.json();
+        let aid=data?.response?.assetId;
+        if(!aid&&data.path){
+          for(let p=0;p<30;p++){
+            await new Promise(r=>setTimeout(r,2000));
+            const pr=await fetch(`${WORKER_URL}/assets/v1/${data.path}`,{headers:{"x-api-key":apiKey}});
+            if(pr.ok){const pd=await pr.json();if(pd.done){aid=pd.response?.assetId;break}}
+          }
+        }
+        if(!aid)throw new Error("No ID");
+        ids[face]=String(aid);
+        const tc=document.createElement("canvas");tc.width=64;tc.height=64;
+        tc.getContext("2d").drawImage(item.faces[face],0,0,64,64);
+        thumbs[face]=tc.toDataURL("image/jpeg",0.6);
+      }catch(e){
+        ok=false;item.status="error";break;
+      }
+      await new Promise(r=>setTimeout(r,800));
+    }
+    if(ok){
+      item.ids=ids;item.status="done";
+      const json={name:preset};
+      for(const f of FACE_ORDER){const k=FACE_SHORT[f].toLowerCase();json[k]=`rbxassetid://${ids[f]||""}`}
+      saveToHistory({name:preset,date:new Date().toISOString(),ids,thumbs,json});
+    }
+    renderBatchQueue();
+  }
+  btn.disabled=false;btn.textContent="Upload All";
+  renderBatchQueue();
 }

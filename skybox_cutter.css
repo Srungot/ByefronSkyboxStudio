@@ -124,6 +124,11 @@ nav a:hover{color:var(--text)}
 .control-group input[type=range]{-webkit-appearance:none;appearance:none;width:140px;height:6px;padding:0;border:none;border-radius:3px;background:var(--surface3)}
 .control-group input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
 .control-group .range-val{font-size:11px;color:var(--text2);min-width:32px;text-align:center;font-family:var(--mono)}
+.control-sep{width:1px;height:20px;background:var(--border2);flex-shrink:0}
+.wm-check{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.wm-check input{accent-color:var(--accent)}
+.wm-input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font);font-size:11px;padding:5px 8px;width:100px}
+.wm-input:focus{border-color:var(--accent-dim);outline:none}
 
 .convert-progress{max-width:1280px;margin:0 auto 16px;padding:0 16px;display:none}
 .convert-progress.visible{display:block}
@@ -136,6 +141,22 @@ nav a:hover{color:var(--text)}
 .preview3d-box canvas:active{cursor:grabbing}
 .preview3d-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)}
 .preview3d-hint{font-size:11px;color:var(--text3);padding:8px 16px;text-align:center}
+
+.cube-grid .face[data-face] .face-replace-hint{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:600;opacity:0;transition:opacity .15s;pointer-events:none}
+.cube-grid .face[data-face]:hover .face-replace-hint{opacity:1}
+
+.batch-section{max-width:780px;margin:0 auto 40px;padding:0 16px}
+.batch-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.batch-count{font-size:12px;color:var(--text3);margin-left:auto}
+.batch-queue{display:flex;flex-direction:column;gap:8px}
+.batch-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.batch-item .batch-thumb{width:48px;height:24px;border-radius:4px;object-fit:cover;background:var(--surface2)}
+.batch-item .batch-name{font-size:12px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.batch-item .batch-status{font-size:11px;color:var(--text3);min-width:80px;text-align:right}
+.batch-item .batch-status.done{color:var(--green)}
+.batch-item .batch-status.err{color:var(--red)}
+.batch-item .batch-remove{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:4px}
+.batch-item .batch-remove:hover{color:var(--red)}
 
 .tutorial-section{max-width:780px;margin:0 auto 40px;padding:0 16px}
 .tut-step{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px}

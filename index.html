@@ -25,12 +25,16 @@
   <button class="btn btn-accent" onclick="document.getElementById('fileInput').click()">Choose file</button>
   <button class="btn btn-green hidden" id="exportBtn" onclick="exportAll()">Export All</button>
   <button class="btn hidden" id="exportZipBtn" onclick="exportZip()">Export ZIP</button>
+  <button class="btn hidden" id="luaBtn" onclick="showLuaSnippet()">Lua Code</button>
+  <button class="btn hidden" id="shareBtn" onclick="sharePreset()">Share</button>
   <button class="btn hidden" id="uploadToggle" onclick="openUploadModal()">Upload to Roblox</button>
   <input type="file" id="fileInput" accept="image/*" style="display:none">
+  <input type="file" id="batchInput" accept="image/*" multiple style="display:none">
 </div>
 
 <div class="tabs">
   <div class="tab active" data-tab="convert" onclick="switchTab('convert')">Convert</div>
+  <div class="tab" data-tab="batch" onclick="switchTab('batch')">Batch</div>
   <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
   <div class="tab" data-tab="tutorial" onclick="switchTab('tutorial')">Tutorial</div>
 </div>
@@ -52,6 +56,25 @@
       <span class="range-val" id="rotVal">0</span>
     </div>
     <button class="btn" id="reconvertBtn" onclick="reconvert()" style="font-size:11px;padding:6px 14px">Reconvert</button>
+    <div class="control-sep"></div>
+    <div class="control-group">
+      <label>Brightness</label>
+      <input type="range" id="brSlider" min="-100" max="100" value="0" step="1">
+      <span class="range-val" id="brVal">0</span>
+    </div>
+    <div class="control-group">
+      <label>Contrast</label>
+      <input type="range" id="ctSlider" min="-100" max="100" value="0" step="1">
+      <span class="range-val" id="ctVal">0</span>
+    </div>
+    <div class="control-group">
+      <label>Saturation</label>
+      <input type="range" id="satSlider" min="-100" max="100" value="0" step="1">
+      <span class="range-val" id="satVal">0</span>
+    </div>
+    <div class="control-sep"></div>
+    <label class="wm-check"><input type="checkbox" id="wmCheck"> Watermark</label>
+    <input type="text" id="wmText" placeholder="Watermark text" value="Byefron" class="wm-input">
   </div>
   <div class="convert-progress" id="convertProgress">
     <div class="convert-progress-inner"><div class="bar" id="convertFill"></div></div>
@@ -81,6 +104,18 @@
         <div class="preview3d-hint">Click and drag to look around. Scroll to zoom.</div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-batch">
+  <div class="batch-section">
+    <div class="batch-header">
+      <button class="btn btn-accent" onclick="document.getElementById('batchInput').click()">Add Panoramas</button>
+      <button class="btn" id="batchConvertBtn" onclick="batchConvertAll()" disabled>Convert All</button>
+      <button class="btn btn-green" id="batchUploadBtn" onclick="batchUploadAll()" disabled>Upload All</button>
+      <span class="batch-count" id="batchCount">0 files</span>
+    </div>
+    <div class="batch-queue" id="batchQueue"></div>
   </div>
 </div>
 
@@ -169,6 +204,32 @@
     <div style="display:flex;gap:10px;margin-top:14px">
       <button class="btn btn-accent" id="uploadBtn" onclick="uploadAll()" style="flex:1">Upload All Faces</button>
       <button class="btn" onclick="closeUploadModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="luaOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeLuaModal()">&times;</button>
+    <h2>Roblox Lua Snippet</h2>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Paste this in a Script or the Command Bar in Roblox Studio:</p>
+    <div class="json-box" id="luaCode" style="white-space:pre;font-size:11px;max-height:300px" onclick="navigator.clipboard.writeText(this.textContent);this.style.borderColor='var(--green)';setTimeout(()=>this.style.borderColor='',800)"></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-accent" onclick="navigator.clipboard.writeText(document.getElementById('luaCode').textContent);" style="flex:1">Copy</button>
+      <button class="btn" onclick="closeLuaModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="shareOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeShareModal()">&times;</button>
+    <h2>Share Preset</h2>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Share this link. Anyone with it can see the asset IDs:</p>
+    <input type="text" id="shareUrl" readonly style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:11px" onclick="this.select();navigator.clipboard.writeText(this.value)">
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-accent" onclick="document.getElementById('shareUrl').select();navigator.clipboard.writeText(document.getElementById('shareUrl').value)" style="flex:1">Copy Link</button>
+      <button class="btn" onclick="closeShareModal()">Close</button>
     </div>
   </div>
 </div>
