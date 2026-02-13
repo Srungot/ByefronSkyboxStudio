@@ -26,7 +26,6 @@
   <button class="btn btn-green hidden" id="exportBtn" onclick="exportAll()">Export All</button>
   <button class="btn hidden" id="exportZipBtn" onclick="exportZip()">Export ZIP</button>
   <button class="btn hidden" id="luaBtn" onclick="showLuaSnippet()">Lua Code</button>
-  <button class="btn hidden" id="shareBtn" onclick="sharePreset()">Share</button>
   <button class="btn hidden" id="uploadToggle" onclick="openUploadModal()">Upload to Roblox</button>
   <input type="file" id="fileInput" accept="image/*" style="display:none">
   <input type="file" id="batchInput" accept="image/*" multiple style="display:none">
@@ -36,6 +35,7 @@
   <div class="tab active" data-tab="convert" onclick="switchTab('convert')">Convert</div>
   <div class="tab" data-tab="batch" onclick="switchTab('batch')">Batch</div>
   <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
+  <div class="tab" data-tab="settings" onclick="switchTab('settings')">Settings</div>
   <div class="tab" data-tab="tutorial" onclick="switchTab('tutorial')">Tutorial</div>
 </div>
 
@@ -119,6 +119,24 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-settings">
+  <div class="settings-section">
+    <h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Roblox API Settings</h2>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">These credentials are stored locally in your browser and never sent anywhere except to Roblox's API.</p>
+    <div class="settings-field">
+      <label>Open Cloud API Key</label>
+      <input type="password" id="apiKey" placeholder="Paste your API key">
+    </div>
+    <div class="settings-field">
+      <label>Roblox User ID</label>
+      <input type="text" id="userId" placeholder="e.g. 10092447863">
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-accent" onclick="saveConfig();this.textContent='Saved!';setTimeout(()=>this.textContent='Save',800)">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="tab-content" id="tab-history">
   <div class="history-section" id="historyContainer">
     <div class="history-empty" id="historyEmpty">No uploads yet. Convert and upload a skybox to see it here.</div>
@@ -195,9 +213,8 @@
   <div class="modal">
     <button class="modal-close" onclick="closeUploadModal()">&times;</button>
     <h2>Upload to Roblox</h2>
-    <div class="field"><label>Open Cloud API Key</label><input type="password" id="apiKey" placeholder="Paste your API key"></div>
-    <div class="field"><label>Roblox User ID</label><input type="text" id="userId" placeholder="e.g. 10092447863"></div>
     <div class="field"><label>Preset Name</label><input type="text" id="presetName" value="My Skybox"></div>
+    <p id="noCredsWarn" class="hidden" style="font-size:11px;color:var(--red);margin-bottom:8px">Set your API Key and User ID in the Settings tab first.</p>
     <div class="upload-steps" id="uploadSteps"></div>
     <div class="modal-progress" id="progressBar" style="display:none"><div class="bar" id="progressFill"></div></div>
     <div class="json-box hidden" id="jsonOutput" title="Click to copy"></div>

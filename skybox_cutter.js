@@ -165,6 +165,7 @@ function showResults(){
   document.getElementById("splitView").classList.remove("hidden");
   document.getElementById("exportBtn").classList.remove("hidden");
   document.getElementById("exportZipBtn").classList.remove("hidden");
+  document.getElementById("luaBtn").classList.remove("hidden");
   document.getElementById("uploadToggle").classList.remove("hidden");
   document.querySelectorAll(".cube-grid .face[data-face]").forEach(el=>{
     const f=el.dataset.face;
@@ -277,6 +278,10 @@ function openUploadModal(){
   btn.onclick=uploadAll;
   document.getElementById("progressBar").style.display="none";
   document.getElementById("jsonOutput").classList.add("hidden");
+  const warn=document.getElementById("noCredsWarn");
+  const ak=document.getElementById("apiKey").value.trim();
+  const ui=document.getElementById("userId").value.trim();
+  if(!ak||!ui){warn.classList.remove("hidden");btn.disabled=true}else{warn.classList.add("hidden")}
   buildSteps();
 }
 function closeUploadModal(){document.getElementById("uploadOverlay").classList.remove("open")}
@@ -307,7 +312,7 @@ async function uploadAll(){
   const apiKey=document.getElementById("apiKey").value.trim();
   const userId=document.getElementById("userId").value.trim();
   const preset=document.getElementById("presetName").value.trim()||"My Skybox";
-  if(!apiKey||!userId){alert("Enter API Key and User ID");return}
+  if(!apiKey||!userId){switchTab("settings");closeUploadModal();return}
 
   const btn=document.getElementById("uploadBtn");
   const bar=document.getElementById("progressBar");
@@ -379,8 +384,6 @@ async function uploadAll(){
   btn.onclick=()=>closeUploadModal();
 
   lastUploadIds=ids;
-  document.getElementById("luaBtn").classList.remove("hidden");
-  document.getElementById("shareBtn").classList.remove("hidden");
   saveToHistory({name:preset,date:new Date().toISOString(),ids,thumbs,json});
 }
 
@@ -421,10 +424,31 @@ function renderHistory(){
       <div class="json-box" style="display:block;max-height:140px;font-size:11px;cursor:pointer" onclick="navigator.clipboard.writeText(this.dataset.raw);this.style.borderColor='var(--green)';setTimeout(()=>this.style.borderColor='',800)" data-raw='${JSON.stringify(entry.json).replace(/'/g,"&#39;")}'>${syntaxJSON(entry.json)}</div>
       <div class="hi-actions" style="margin-top:10px">
         <button class="btn" onclick="navigator.clipboard.writeText(JSON.stringify(${JSON.stringify(entry.json).replace(/"/g,'&quot;')},null,2))">Copy JSON</button>
+        <button class="btn" onclick="historyLua(${idx})">Lua Code</button>
+        <button class="btn" onclick="historyShare(${idx})">Share</button>
         <button class="hi-del" onclick="deleteHistory(${idx})">Delete</button>
       </div>`;
     container.appendChild(div);
   });
+}
+
+function historyLua(idx){
+  const h=getHistory();if(!h[idx])return;
+  const ids=h[idx].ids||{};
+  lastUploadIds=ids;
+  showLuaSnippet();
+}
+
+function historyShare(idx){
+  const h=getHistory();if(!h[idx])return;
+  const entry=h[idx];
+  const ids=entry.ids||{};
+  const params=new URLSearchParams();
+  params.set("n",entry.name||"Skybox");
+  for(const f of FACE_ORDER){if(ids[f])params.set(FACE_SHORT[f].toLowerCase(),ids[f])}
+  const url=location.origin+location.pathname+"?"+params.toString();
+  document.getElementById("shareUrl").value=url;
+  document.getElementById("shareOverlay").classList.add("open");
 }
 
 let gl3d=null,gl3dProg=null,gl3dVao=null;
@@ -654,7 +678,6 @@ window.addEventListener("DOMContentLoaded",()=>{
       for(const f of FACE_ORDER){const k=FACE_SHORT[f].toLowerCase();json[k]=`rbxassetid://${ids[f]||""}`}
       alert(`Shared preset "${name}" loaded! Click "Lua Code" to get the snippet.`);
       document.getElementById("luaBtn").classList.remove("hidden");
-      document.getElementById("shareBtn").classList.remove("hidden");
     }
   }
 });
@@ -678,10 +701,33 @@ function renderBatchQueue(){
   batchQueue.forEach((item,idx)=>{
     const div=document.createElement("div");div.className="batch-item";
     const statusCls=item.status==="done"?"done":item.status==="error"?"err":"";
+    let thumbsHtml="";
+    if(item.faces){
+      thumbsHtml='<div style="display:flex;gap:2px;margin-top:8px">';
+      for(const f of FACE_ORDER){
+        if(item.faces[f]){
+          const tc=document.createElement("canvas");tc.width=32;tc.height=32;
+          tc.getContext("2d").drawImage(item.faces[f],0,0,32,32);
+          thumbsHtml+=`<img src="${tc.toDataURL("image/jpeg",0.5)}" style="width:32px;height:32px;border-radius:2px">`;
+        }
+      }
+      thumbsHtml+="</div>";
+    }
+    let jsonHtml="";
+    if(item.ids){
+      const json={name:item.name};
+      for(const f of FACE_ORDER){json[FACE_SHORT[f].toLowerCase()]=`rbxassetid://${item.ids[f]||""}`}
+      jsonHtml=`<div class="json-box" style="display:block;max-height:100px;font-size:10px;margin-top:8px;cursor:pointer" onclick="navigator.clipboard.writeText(this.dataset.raw);this.style.borderColor='var(--green)';setTimeout(()=>this.style.borderColor='',800)" data-raw='${JSON.stringify(json,null,2).replace(/'/g,"&#39;")}'>${syntaxJSON(json)}</div>`;
+    }
     div.innerHTML=`
-      <div class="batch-name">${item.name}</div>
-      <div class="batch-status ${statusCls}">${item.status}</div>
-      <button class="batch-remove" onclick="batchRemove(${idx})">\u00d7</button>`;
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="batch-name">${item.name}</div>
+          <div class="batch-status ${statusCls}">${item.status}</div>
+          <button class="batch-remove" onclick="batchRemove(${idx})">×</button>
+        </div>
+        ${thumbsHtml}${jsonHtml}
+      </div>`;
     container.appendChild(div);
   });
 }
