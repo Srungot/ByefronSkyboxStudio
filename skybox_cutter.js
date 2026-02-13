@@ -675,7 +675,7 @@ async function loadSharedPreset(ids,name){
   const allIds=FACE_ORDER.map(f=>ids[f]).filter(Boolean);
   if(allIds.length===0){showLuaSnippet();return}
   try{
-    const resp=await fetch(`https://thumbnails.roblox.com/v1/assets?assetIds=${allIds.join(",")}&size=420x420&format=Png&isCircular=false`);
+    const resp=await fetch(`${WORKER_URL.replace("/robloxassets","")}/thumbnails/v1/assets?assetIds=${allIds.join(",")}&size=420x420&format=Png&isCircular=false`);
     const data=await resp.json();
     const urlMap={};
     if(data.data){for(const item of data.data){urlMap[String(item.targetId)]=item.imageUrl}}
