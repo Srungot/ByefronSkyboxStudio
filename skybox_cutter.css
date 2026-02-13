@@ -35,7 +35,6 @@ nav a:hover{color:var(--text)}
 .btn-green:hover{background:#15803d;border-color:#15803d}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* Tabs */
 .tabs{display:flex;justify-content:center;gap:0;margin:0 auto 24px;max-width:780px;border-bottom:1px solid var(--border);padding:0 16px}
 .tab{padding:10px 24px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
 .tab:hover{color:var(--text2)}
@@ -43,13 +42,20 @@ nav a:hover{color:var(--text)}
 .tab-content{display:none}
 .tab-content.active{display:block}
 
-.result-box{max-width:780px;margin:0 auto 32px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.split-view{display:flex;gap:16px;max-width:1280px;margin:0 auto 32px;padding:0 16px;align-items:stretch}
+.split-left{flex:1;min-width:0}
+.split-right{flex:1;min-width:0;display:flex;flex-direction:column}
+
+.result-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;height:100%}
 .result-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-wrap:wrap;gap:8px}
 
 .cube-wrap{padding:16px;display:flex;justify-content:center}
 .cube-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:2px;width:100%;max-width:480px;aspect-ratio:4/3}
 .cube-grid .face{position:relative;background:var(--surface2);overflow:hidden;display:flex;align-items:center;justify-content:center}
-.cube-grid .face img{width:100%;height:100%;object-fit:cover}
+.cube-grid .face img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.cube-grid .face[data-face]{cursor:grab;transition:outline .15s,opacity .15s}
+.cube-grid .face[data-face]:active{cursor:grabbing}
+.cube-grid .face[data-face].drag-over{outline:2px solid var(--accent);outline-offset:-2px}
 .cube-grid .face .lbl{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--accent);text-shadow:0 1px 4px #000;opacity:.8}
 .cube-grid .empty{background:transparent}
 
@@ -59,7 +65,6 @@ nav a:hover{color:var(--text)}
 .face-item .tag{font-size:11px;font-weight:700;color:var(--accent);min-width:24px}
 .face-item .fname{font-size:11px;color:var(--text2);text-decoration:underline;text-underline-offset:2px}
 
-/* Modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;padding:16px}
 .overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:520px;padding:24px;position:relative;transform:translateY(10px);transition:transform .2s;max-height:90vh;overflow-y:auto}
@@ -86,7 +91,6 @@ nav a:hover{color:var(--text)}
 .modal-progress{height:4px;background:var(--surface2);border-radius:2px;margin:12px 0 8px;overflow:hidden}
 .modal-progress .bar{height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent2));transition:width .4s;width:0;border-radius:2px}
 
-/* JSON syntax */
 .json-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.7;margin-top:12px;max-height:200px;overflow-y:auto;cursor:pointer;white-space:pre-wrap;word-break:break-all}
 .json-box:hover{border-color:var(--accent-dim)}
 .j-key{color:var(--accent)}
@@ -94,7 +98,6 @@ nav a:hover{color:var(--text)}
 .j-brace{color:var(--text3)}
 .j-colon{color:var(--text3)}
 
-/* History */
 .history-section{max-width:780px;margin:0 auto 40px;padding:0 16px}
 .history-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
 .history-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
@@ -109,12 +112,31 @@ nav a:hover{color:var(--text)}
 .hi-del{color:var(--red);cursor:pointer;font-size:11px;padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:none;transition:all .15s}
 .hi-del:hover{border-color:var(--red);background:rgba(248,113,113,.1)}
 
-/* Drag overlay */
 .drop-overlay{position:fixed;inset:0;z-index:200;background:rgba(124,58,237,.12);border:3px dashed var(--accent);pointer-events:none;opacity:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
 .drop-overlay.visible{opacity:1}
 .drop-overlay-text{font-size:18px;font-weight:700;color:var(--accent);padding:20px 40px;background:var(--surface);border-radius:12px;border:1px solid var(--accent-dim)}
 
-/* Tutorial */
+.controls-bar{max-width:1280px;margin:0 auto 16px;padding:0 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.control-group{display:flex;align-items:center;gap:8px}
+.control-group label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.control-group select,.control-group input[type=range]{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;cursor:pointer}
+.control-group select:focus{border-color:var(--accent-dim);outline:none}
+.control-group input[type=range]{-webkit-appearance:none;appearance:none;width:140px;height:6px;padding:0;border:none;border-radius:3px;background:var(--surface3)}
+.control-group input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+.control-group .range-val{font-size:11px;color:var(--text2);min-width:32px;text-align:center;font-family:var(--mono)}
+
+.convert-progress{max-width:1280px;margin:0 auto 16px;padding:0 16px;display:none}
+.convert-progress.visible{display:block}
+.convert-progress-inner{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.convert-progress-inner .bar{height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent2));transition:width .3s;width:0;border-radius:2px}
+.convert-progress-label{font-size:11px;color:var(--text3);margin-top:6px;text-align:center}
+
+.preview3d-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;flex:1;display:flex;flex-direction:column;height:100%}
+.preview3d-box canvas{width:100%;height:100%;display:block;cursor:grab}
+.preview3d-box canvas:active{cursor:grabbing}
+.preview3d-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)}
+.preview3d-hint{font-size:11px;color:var(--text3);padding:8px 16px;text-align:center}
+
 .tutorial-section{max-width:780px;margin:0 auto 40px;padding:0 16px}
 .tut-step{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:12px}
 .tut-step .tut-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:var(--accent-dim);color:#fff;font-size:13px;font-weight:700;margin-right:10px;flex-shrink:0}
@@ -127,6 +149,9 @@ nav a:hover{color:var(--text)}
 .tut-note{background:var(--surface2);border-left:3px solid var(--accent-dim);border-radius:0 6px 6px 0;padding:12px 16px;margin-top:10px;font-size:12px;color:var(--text3);line-height:1.6}
 
 .hidden{display:none!important}
+@media(max-width:900px){
+  .split-view{flex-direction:column}
+}
 @media(max-width:600px){
   nav{gap:16px;padding:12px 16px}
   .hero{padding:32px 16px 24px}

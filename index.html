@@ -24,43 +24,72 @@
 <div class="action-bar">
   <button class="btn btn-accent" onclick="document.getElementById('fileInput').click()">Choose file</button>
   <button class="btn btn-green hidden" id="exportBtn" onclick="exportAll()">Export All</button>
+  <button class="btn hidden" id="exportZipBtn" onclick="exportZip()">Export ZIP</button>
   <button class="btn hidden" id="uploadToggle" onclick="openUploadModal()">Upload to Roblox</button>
   <input type="file" id="fileInput" accept="image/*" style="display:none">
 </div>
 
-<!-- Tabs -->
 <div class="tabs">
   <div class="tab active" data-tab="convert" onclick="switchTab('convert')">Convert</div>
   <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
   <div class="tab" data-tab="tutorial" onclick="switchTab('tutorial')">Tutorial</div>
 </div>
 
-<!-- Convert tab -->
 <div class="tab-content active" id="tab-convert">
-  <div class="result-box hidden" id="resultBox">
-    <div class="result-header">
-      <span id="fileInfo">No file loaded</span>
-      <span id="faceSize"></span>
+  <div class="controls-bar hidden" id="controlsBar">
+    <div class="control-group">
+      <label>Resolution</label>
+      <select id="resSelect">
+        <option value="256">256</option>
+        <option value="512">512</option>
+        <option value="1024" selected>1024</option>
+        <option value="2048">2048</option>
+      </select>
     </div>
-    <div class="cube-wrap">
-      <div class="cube-grid" id="cubeGrid">
-        <div class="face empty"></div><div class="face" data-face="Up"><div class="lbl">Up</div></div><div class="face empty"></div><div class="face empty"></div>
-        <div class="face" data-face="Left"><div class="lbl">Lf</div></div><div class="face" data-face="Front"><div class="lbl">Ft</div></div><div class="face" data-face="Right"><div class="lbl">Rt</div></div><div class="face" data-face="Back"><div class="lbl">Bk</div></div>
-        <div class="face empty"></div><div class="face" data-face="Down"><div class="lbl">Dn</div></div><div class="face empty"></div><div class="face empty"></div>
+    <div class="control-group">
+      <label>Rotation</label>
+      <input type="range" id="rotSlider" min="-180" max="180" value="0" step="1">
+      <span class="range-val" id="rotVal">0</span>
+    </div>
+    <button class="btn" id="reconvertBtn" onclick="reconvert()" style="font-size:11px;padding:6px 14px">Reconvert</button>
+  </div>
+  <div class="convert-progress" id="convertProgress">
+    <div class="convert-progress-inner"><div class="bar" id="convertFill"></div></div>
+    <div class="convert-progress-label" id="convertLabel">Converting...</div>
+  </div>
+  <div class="split-view hidden" id="splitView">
+    <div class="split-left">
+      <div class="result-box" id="resultBox">
+        <div class="result-header">
+          <span id="fileInfo">No file loaded</span>
+          <span id="faceSize"></span>
+        </div>
+        <div class="cube-wrap">
+          <div class="cube-grid" id="cubeGrid">
+            <div class="face empty"></div><div class="face" data-face="Up"><div class="lbl">Up</div></div><div class="face empty"></div><div class="face empty"></div>
+            <div class="face" data-face="Left"><div class="lbl">Lf</div></div><div class="face" data-face="Front"><div class="lbl">Ft</div></div><div class="face" data-face="Right"><div class="lbl">Rt</div></div><div class="face" data-face="Back"><div class="lbl">Bk</div></div>
+            <div class="face empty"></div><div class="face" data-face="Down"><div class="lbl">Dn</div></div><div class="face empty"></div><div class="face empty"></div>
+          </div>
+        </div>
+        <div class="face-list" id="faceList"></div>
       </div>
     </div>
-    <div class="face-list" id="faceList"></div>
+    <div class="split-right" id="preview3dWrap">
+      <div class="preview3d-box">
+        <div class="preview3d-header"><span>3D Skybox Preview</span><span>Drag to rotate</span></div>
+        <canvas id="preview3dCanvas"></canvas>
+        <div class="preview3d-hint">Click and drag to look around. Scroll to zoom.</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- History tab -->
 <div class="tab-content" id="tab-history">
   <div class="history-section" id="historyContainer">
     <div class="history-empty" id="historyEmpty">No uploads yet. Convert and upload a skybox to see it here.</div>
   </div>
 </div>
 
-<!-- Tutorial tab -->
 <div class="tab-content" id="tab-tutorial">
   <div class="tutorial-section">
 
@@ -127,7 +156,6 @@
   </div>
 </div>
 
-<!-- Upload Modal -->
 <div class="overlay" id="uploadOverlay">
   <div class="modal">
     <button class="modal-close" onclick="closeUploadModal()">&times;</button>
@@ -145,6 +173,7 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="skybox_cutter.js"></script>
 </body>
 </html>
